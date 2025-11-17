@@ -33,7 +33,8 @@ def test_jsonb_features():
             ('{"nombre": "Silla", "precio": 150.75, "stock": 2, "color": "Rojo"}');
         """)
         
-        cur.execute("CREATE INDEX idx_data_gin ON productos USING GIN (data);")
+        cur.execute("DROP INDEX IF EXISTS idx_data_gin;")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_data_gin ON productos USING GIN (data);")
 
         cur.execute("""
             SELECT data->>'nombre' 
