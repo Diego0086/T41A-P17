@@ -42,7 +42,7 @@ def test_hstore_lifecycle():
         cur.execute("UPDATE productos_hstore SET atributos = atributos || 'peso=>\"30 kg\"' WHERE nombre = 'Piano';")
         cur.execute("UPDATE productos_hstore SET atributos = delete(atributos, 'color') WHERE nombre = 'Libro';")
 
-       cur.execute("""
+        cur.execute("""
             SELECT akeys(atributos), avals(atributos) 
             FROM productos_hstore 
             WHERE nombre = 'Laptop';
