@@ -4,15 +4,6 @@ from psycopg2.extras import register_hstore
 from decimal import Decimal
 
 def test_hstore_lifecycle():
-    """
-    Prueba completa de HSTORE incluyendo:
-    - CRUD básico.
-    - Operadores de existencia (?, ?&).
-    - Funciones de despiece (skeys, svals).
-    - Índices GIN.
-    - Conversión a JSON.
-    - Funciones PL/pgSQL personalizadas.
-    """
     conn = None
     cur = None 
     try:
@@ -23,11 +14,14 @@ def test_hstore_lifecycle():
             host='localhost',
             port='5432'
         )
-        register_hstore(conn)
+        
         cur = conn.cursor()
 
         cur.execute("DROP TABLE IF EXISTS productos_hstore CASCADE;")
+        
         cur.execute("CREATE EXTENSION IF NOT EXISTS hstore;")
+        
+        register_hstore(conn)
         
         cur.execute("""
             CREATE TABLE productos_hstore (
