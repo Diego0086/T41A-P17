@@ -1,0 +1,34 @@
+name: Daily Pull Request Info
+
+on:
+  workflow_dispatch
+
+jobs:
+  get-pr-info:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+
+    - name: Get Open Pull Requests
+      id: get-prs
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}        
+      run: |
+        prs=$(gh pr list --state open --json number,headRefName,author,statusCheckRollup)
+        echo "$prs" > prs.json
+        
+        echo "Open Pull Requests:"
+        cat prs.json | jq -c '.[]' | while read pr; do
+          number=$(echo "$pr" | jq -r '.number')
+          branch=$(echo "$pr" | jq -r '.headRefName')
+          user=$(echo "$pr" | jq -r '.author.login')
+          status=$(echo "$pr" | jq -r '.statusCheckRollup[0].conclusion')
+          echo "Pull Request Number: $number"
+          echo "Branch: $branch"
+          echo "User: $user"
+          echo "Status: $status"
+          echo "-------------------------"
+        done
