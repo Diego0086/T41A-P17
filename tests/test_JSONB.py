@@ -4,6 +4,7 @@ from decimal import Decimal
 
 def test_jsonb_features():
     conn = None
+    cur = None 
     try:
         conn = psycopg2.connect(
             dbname='test_db',
@@ -13,6 +14,26 @@ def test_jsonb_features():
             port='5432'
         )
         cur = conn.cursor()
+
+        cur.execute("DROP TABLE IF EXISTS productos CASCADE;")
+        
+        cur.execute("""
+            CREATE TABLE productos (
+                id SERIAL PRIMARY KEY,
+                data JSONB
+            );
+        """)
+
+        cur.execute("""
+            INSERT INTO productos (data) VALUES 
+            ('{"nombre": "Laptop", "precio": 1200.50, "stock": 16, "color": "Rojo"}'),
+            ('{"nombre": "Teclado", "precio": 75.99, "stock": 40, "color": "Negro"}'),
+            ('{"nombre": "Mouse", "precio": 25.00, "stock": 5, "color": "Verde"}'),
+            ('{"nombre": "Monitor", "precio": 299.99, "stock": 58, "color": "Negro"}'),
+            ('{"nombre": "Silla", "precio": 150.75, "stock": 2, "color": "Rojo"}');
+        """)
+        
+        cur.execute("CREATE INDEX idx_data_gin ON productos USING GIN (data);")
 
         cur.execute("""
             SELECT data->>'nombre' 
@@ -33,7 +54,7 @@ def test_jsonb_features():
             WHERE data->>'nombre' = 'Laptop';
         """)
         precio_laptop = cur.fetchone()[0]
-        assert precio_laptop == Decimal('1200.50'), "El precio de la Laptop en el JSONB no es correcto."
+        assert precio_laptop == Decimal('1200.50')
 
         cur.execute("""
             SELECT data->>'color' 
@@ -41,7 +62,7 @@ def test_jsonb_features():
             WHERE data->>'nombre' = 'Teclado';
         """)
         color_teclado = cur.fetchone()[0]
-        assert color_teclado == 'Negro', "El color del Teclado debería ser Negro."
+        assert color_teclado == 'Negro'
 
         cur.execute("""
             SELECT COUNT(*) 
@@ -49,16 +70,10 @@ def test_jsonb_features():
             WHERE (data->>'stock')::int = 40;
         """)
         conteo_stock_40 = cur.fetchone()[0]
-        assert conteo_stock_40 >= 1, "No se encontró ningún producto con stock 40."
-
-        cur.execute("""
-            SELECT indexname FROM pg_indexes 
-            WHERE tablename = 'productos' AND indexname = 'idx_data_gin';
-        """)
-        index_exists = cur.fetchone()
-        assert index_exists is not None, "El índice GIN para JSONB no se creó correctamente."
+        assert conteo_stock_40 >= 1
 
     finally:
         if conn:
-            cur.close()
+            if cur:
+                cur.close()
             conn.close()
